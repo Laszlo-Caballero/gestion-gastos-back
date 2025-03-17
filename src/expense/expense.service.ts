@@ -49,12 +49,8 @@ export class ExpenseService {
       (acc, expense) => acc + expense.expenseAmount,
       0,
     );
-    console.log({ totalExpenses });
 
     const newTotal = totalExpenses + createExpenseDto.expenseAmount;
-
-    console.log({ newTotal });
-    console.log(findMaximumQuantity);
 
     if (newTotal > findMaximumQuantity.quantity) {
       const newExtra = newTotal - findMaximumQuantity.quantity;

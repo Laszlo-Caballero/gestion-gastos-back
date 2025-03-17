@@ -99,8 +99,6 @@ export class MaximumQuantityService {
 
     const newExtra = findMaximumQuantity.extra - extraMaximumQuantity;
 
-    console.log(newExtra);
-
     await this.maximumQuantityRepository.update(
       {
         maximumQuantityId: id,
