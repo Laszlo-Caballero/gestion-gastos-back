@@ -12,7 +12,7 @@ export class Expense {
   @Column({ type: 'double precision' })
   expenseAmount: number;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   expenseDate: Date;
 
   @ManyToOne(() => User, (user) => user.expenses)
