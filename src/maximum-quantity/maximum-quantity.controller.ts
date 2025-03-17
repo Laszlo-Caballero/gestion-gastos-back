@@ -1,30 +1,62 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { MaximumQuantityService } from './maximum-quantity.service';
 import { CreateMaximumQuantityDto } from './dto/create-maximum-quantity.dto';
 import { UpdateMaximumQuantityDto } from './dto/update-maximum-quantity.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RequestWithUser } from 'src/types/types';
 
 @Controller('maximum-quantity')
 export class MaximumQuantityController {
-  constructor(private readonly maximumQuantityService: MaximumQuantityService) {}
+  constructor(
+    private readonly maximumQuantityService: MaximumQuantityService,
+  ) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createMaximumQuantityDto: CreateMaximumQuantityDto) {
-    return this.maximumQuantityService.create(createMaximumQuantityDto);
+  create(
+    @Body() createMaximumQuantityDto: CreateMaximumQuantityDto,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.maximumQuantityService.create(
+      createMaximumQuantityDto,
+      req.user,
+    );
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    return this.maximumQuantityService.findAll();
+  findAll(@Request() req: RequestWithUser) {
+    return this.maximumQuantityService.findAll(req.user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.maximumQuantityService.findOne(+id);
+  findOne(@Param('id') id: string, @Request() req: RequestWithUser) {
+    return this.maximumQuantityService.findOne(+id, req.user);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMaximumQuantityDto: UpdateMaximumQuantityDto) {
-    return this.maximumQuantityService.update(+id, updateMaximumQuantityDto);
+  @UseGuards(JwtAuthGuard)
+  @Put(':id')
+  update(
+    @Param('id') id: string,
+    @Body() updateMaximumQuantityDto: UpdateMaximumQuantityDto,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.maximumQuantityService.update(
+      +id,
+      updateMaximumQuantityDto,
+      req.user,
+    );
   }
 
   @Delete(':id')
