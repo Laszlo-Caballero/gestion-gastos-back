@@ -40,6 +40,28 @@ export class MaximumQuantityService {
     };
   }
 
+  async findLast(user: JwtPayload) {
+    const findMaximumQuantity = await this.maximumQuantityRepository.findOne({
+      where: {
+        user: {
+          userId: user.id,
+        },
+      },
+      order: {
+        maximumQuantityId: 'DESC',
+      },
+    });
+
+    if (!findMaximumQuantity)
+      throw new HttpException('Maximum quantity not found', 404);
+
+    return {
+      message: 'Maximum quantity retrieved successfully',
+      body: findMaximumQuantity,
+      status: 200,
+    };
+  }
+
   async findAll(user: JwtPayload) {
     const maximumQuantities = await this.maximumQuantityRepository.find({
       where: {

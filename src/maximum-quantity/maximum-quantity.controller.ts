@@ -40,6 +40,12 @@ export class MaximumQuantityController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('last')
+  findLast(@Request() req: RequestWithUser) {
+    return this.maximumQuantityService.findLast(req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req: RequestWithUser) {
     return this.maximumQuantityService.findOne(+id, req.user);
