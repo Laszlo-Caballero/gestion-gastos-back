@@ -7,6 +7,8 @@ import { MoreThanOrEqual, Repository } from 'typeorm';
 import { Expense } from './entities/expense.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { MaximumQuantity } from 'src/maximum-quantity/entities/maximum-quantity.entity';
+import { Workbook } from 'exceljs';
+import { isValid, parse } from 'date-fns';
 
 @Injectable()
 export class ExpenseService {
@@ -154,6 +156,73 @@ export class ExpenseService {
       message: 'Expense deleted successfully',
       body: true,
       status: 200,
+    };
+  }
+
+  async importCsv(file: Express.Multer.File | undefined, user: JwtPayload) {
+    if (!file) throw new HttpException('File not found', 400);
+
+    const fileExtension = file.originalname.split('.').pop();
+    if (fileExtension !== 'xlsx' && fileExtension !== 'xls') {
+      throw new HttpException('Invalid file type', 400);
+    }
+
+    const findUser = await this.userRepository.findOneBy({ userId: user.id });
+
+    if (!findUser) throw new HttpException('User not found', 404);
+
+    const wookbook = new Workbook();
+
+    await wookbook.xlsx.load(file.buffer);
+    const worksheet = wookbook.worksheets[0];
+
+    let total = 0;
+
+    worksheet.eachRow(async (row, rowNumber) => {
+      if (rowNumber === 1) return;
+
+      const date = row.getCell(1).value?.toString();
+      const description = row.getCell(2).value?.toString();
+      const amount = row.getCell(4).value?.toString();
+
+      if (!date || !description || !amount) {
+        return;
+      }
+
+      const parseDate = parse(date, 'dd/MM/yyyy', new Date());
+
+      if (!isValid(parseDate)) {
+        return;
+      }
+
+      const parseAmount = parseFloat(amount.replace(',', '.'));
+
+      if (isNaN(parseAmount) || parseAmount >= 0) {
+        return;
+      }
+
+      const newExpense = this.expenseRepository.create({
+        expenseDate: parseDate,
+        expenseName: description,
+        expenseAmount: Math.abs(parseAmount),
+        user: findUser,
+      });
+
+      total += 1;
+
+      await this.expenseRepository.save(newExpense);
+    });
+
+    if (total === 0) {
+      throw new HttpException('No valid data found in the file', 400);
+    }
+
+    return {
+      message: 'Expenses imported successfully',
+      body: {
+        total,
+      },
+      status: 201,
     };
   }
 }

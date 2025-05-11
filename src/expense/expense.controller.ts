@@ -8,12 +8,15 @@ import {
   UseGuards,
   Request,
   Put,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { ExpenseService } from './expense.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RequestWithUser } from 'src/types/types';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('expense')
 export class ExpenseController {
@@ -48,5 +51,15 @@ export class ExpenseController {
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req: RequestWithUser) {
     return this.expenseService.remove(+id, req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('import/csv')
+  @UseInterceptors(FileInterceptor('file'))
+  importCsv(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.expenseService.importCsv(file, req.user);
   }
 }
