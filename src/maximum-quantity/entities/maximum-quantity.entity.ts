@@ -12,7 +12,7 @@ export class MaximumQuantity {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   initialDate: Date;
 
-  @Column({ default: 0 })
+  @Column({ default: 0, type: 'double precision' })
   extra: number;
 
   @ManyToOne(() => User, (user) => user.maximumQuantities)

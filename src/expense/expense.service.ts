@@ -171,12 +171,41 @@ export class ExpenseService {
 
     if (!findUser) throw new HttpException('User not found', 404);
 
+    const findMaximumQuantity = await this.maximumQuantityRepository.findOne({
+      where: {
+        user: {
+          userId: user.id,
+        },
+      },
+      order: {
+        maximumQuantityId: 'DESC',
+      },
+    });
+
+    if (!findMaximumQuantity)
+      throw new HttpException('Maximum quantity not found', 404);
+
+    const allExpenses = await this.expenseRepository.find({
+      where: {
+        user: {
+          userId: user.id,
+        },
+        expenseDate: MoreThanOrEqual(findMaximumQuantity.initialDate),
+      },
+    });
+
+    let totalExpenses = allExpenses.reduce(
+      (acc, expense) => acc + expense.expenseAmount,
+      0,
+    );
+
     const wookbook = new Workbook();
 
     await wookbook.xlsx.load(file.buffer);
     const worksheet = wookbook.worksheets[0];
 
     let total = 0;
+    let newExtra = 0;
 
     worksheet.eachRow(async (row, rowNumber) => {
       if (rowNumber === 1) return;
@@ -200,6 +229,12 @@ export class ExpenseService {
       if (isNaN(parseAmount) || parseAmount >= 0) {
         return;
       }
+      total += 1;
+      totalExpenses += Math.abs(parseAmount);
+
+      if (totalExpenses > findMaximumQuantity.quantity) {
+        newExtra = totalExpenses - findMaximumQuantity.quantity;
+      }
 
       const newExpense = this.expenseRepository.create({
         expenseDate: parseDate,
@@ -208,10 +243,22 @@ export class ExpenseService {
         user: findUser,
       });
 
-      total += 1;
-
       await this.expenseRepository.save(newExpense);
     });
+
+    if (newExtra > 0) {
+      await this.maximumQuantityRepository.update(
+        {
+          maximumQuantityId: findMaximumQuantity.maximumQuantityId,
+          user: {
+            userId: user.id,
+          },
+        },
+        {
+          extra: findMaximumQuantity.extra + newExtra,
+        },
+      );
+    }
 
     if (total === 0) {
       throw new HttpException('No valid data found in the file', 400);
