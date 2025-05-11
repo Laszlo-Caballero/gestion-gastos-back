@@ -163,7 +163,7 @@ export class ExpenseService {
     if (!file) throw new HttpException('File not found', 400);
 
     const fileExtension = file.originalname.split('.').pop();
-    if (fileExtension !== 'xlsx' && fileExtension !== 'xls') {
+    if (['xlsx', 'xls'].includes(fileExtension ?? '')) {
       throw new HttpException('Invalid file type', 400);
     }
 
