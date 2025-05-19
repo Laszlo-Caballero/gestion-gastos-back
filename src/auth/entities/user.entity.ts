@@ -1,3 +1,4 @@
+import { Icome } from '../../icome/entities/icome.entity';
 import { Expense } from '../../expense/entities/expense.entity';
 import { MaximumQuantity } from '../../maximum-quantity/entities/maximum-quantity.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
@@ -18,4 +19,7 @@ export class User {
 
   @OneToMany(() => MaximumQuantity, (maximumQuantity) => maximumQuantity.user)
   maximumQuantities: MaximumQuantity[];
+
+  @OneToMany(() => Icome, (icome) => icome.user)
+  icomes: Icome[];
 }

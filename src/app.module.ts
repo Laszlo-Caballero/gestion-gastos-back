@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ExpenseModule } from './expense/expense.module';
 import { MaximumQuantityModule } from './maximum-quantity/maximum-quantity.module';
 import { AuthModule } from './auth/auth.module';
+import { IcomeModule } from './icome/icome.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AuthModule } from './auth/auth.module';
     ExpenseModule,
     MaximumQuantityModule,
     AuthModule,
+    IcomeModule,
   ],
   controllers: [],
   providers: [],

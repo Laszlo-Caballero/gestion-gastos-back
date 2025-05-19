@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { JwtPayload } from 'src/types/types';
@@ -12,6 +12,8 @@ import { isValid, parse } from 'date-fns';
 
 @Injectable()
 export class ExpenseService {
+  private readonly logger = new Logger(ExpenseService.name);
+
   constructor(
     @InjectRepository(Expense) private expenseRepository: Repository<Expense>,
     @InjectRepository(User) private userRepository: Repository<User>,
@@ -116,6 +118,42 @@ export class ExpenseService {
 
     if (!findExpense) throw new HttpException('Expense not found', 404);
 
+    const findMaximumQuantity = await this.maximumQuantityRepository.findOne({
+      where: {
+        user: {
+          userId: user.id,
+        },
+      },
+      order: {
+        maximumQuantityId: 'DESC',
+      },
+    });
+
+    if (!findMaximumQuantity)
+      throw new HttpException('Maximum quantity not found', 404);
+
+    const newUpdate =
+      findExpense.expenseAmount - (updateExpenseDto.expenseAmount || 0);
+
+    if (findMaximumQuantity.extra > 0) {
+      const newTotal =
+        newUpdate > 0
+          ? findMaximumQuantity.extra - newUpdate
+          : findMaximumQuantity.extra - newUpdate;
+
+      await this.maximumQuantityRepository.update(
+        {
+          maximumQuantityId: findMaximumQuantity.maximumQuantityId,
+          user: {
+            userId: user.id,
+          },
+        },
+        {
+          extra: newTotal,
+        },
+      );
+    }
+
     await this.expenseRepository.update(
       {
         expenseId: id,
@@ -144,6 +182,36 @@ export class ExpenseService {
     });
 
     if (!findExpense) throw new HttpException('Expense not found', 404);
+
+    const findMaximumQuantity = await this.maximumQuantityRepository.findOne({
+      where: {
+        user: {
+          userId: user.id,
+        },
+      },
+      order: {
+        maximumQuantityId: 'DESC',
+      },
+    });
+
+    if (!findMaximumQuantity)
+      throw new HttpException('Maximum quantity not found', 404);
+
+    if (findMaximumQuantity.extra > 0) {
+      const newTotal = findMaximumQuantity.extra - findExpense.expenseAmount;
+
+      await this.maximumQuantityRepository.update(
+        {
+          maximumQuantityId: findMaximumQuantity.maximumQuantityId,
+          user: {
+            userId: user.id,
+          },
+        },
+        {
+          extra: newTotal,
+        },
+      );
+    }
 
     await this.expenseRepository.delete({
       expenseId: id,
